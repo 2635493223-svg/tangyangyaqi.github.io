@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderlust - 个性化旅游规划系统</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- GSAP 动画库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- ScrollTrigger 插件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- 统一的 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a365d',      // 深蓝色
+                        secondary: '#ff6b6b',    // 珊瑚色
+                        accent: '#4ecdc4',       // 青绿色
+                        light: '#f7fff7',        // 浅灰色
+                        dark: '#2a2d34',         // 深灰色
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    height: {
+                        '128': '32rem',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .text-shadow-lg {
+                text-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            }
+            .backdrop-blur {
+                backdrop-filter: blur(8px);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50;
+            }
+            .btn-outline {
+                @apply border border-primary text-primary px-6 py-3 rounded-lg font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light text-dark overflow-x-hidden">
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-transparent">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2">
+                <span class="text-3xl text-secondary"><i class="fa fa-paper-plane-o"></i></span>
+                <span class="text-2xl font-bold text-white text-shadow-lg">Wanderlust</span>
+            </a>
+            
+            <!-- 桌面导航 -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="text-white hover:text-secondary transition-colors duration-300 text-shadow">首页</a>
+                <a href="#preferences" class="text-white hover:text-secondary transition-colors duration-300 text-shadow">偏好设置</a>
+                <a href="#destinations" class="text-white hover:text-secondary transition-colors duration-300 text-shadow">目的地</a>
+                <a href="#planner" class="text-white hover:text-secondary transition-colors duration-300 text-shadow">行程规划</a>
+                <a href="#inspiration" class="text-white hover:text-secondary transition-colors duration-300 text-shadow">灵感生成器</a>
+                <button class="btn-secondary">登录 / 注册</button>
+            </div>
+            
+            <!-- 移动端菜单按钮 -->
+            <button id="menu-toggle" class="md:hidden text-white text-2xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobile-menu" class="md:hidden bg-white bg-opacity-95 backdrop-blur shadow-lg absolute w-full left-0 top-full transform -translate-y-full opacity-0 transition-all duration-300 invisible">
+            <div class="container mx-auto px-4 py-4 flex flex-col space-y-4">
+                <a href="#home" class="text-primary hover:text-secondary transition-colors duration-300 py-2 border-b border-gray-100">首页</a>
+                <a href="#preferences" class="text-primary hover:text-secondary transition-colors duration-300 py-2 border-b border-gray-100">偏好设置</a>
+                <a href="#destinations" class="text-primary hover:text-secondary transition-colors duration-300 py-2 border-b border-gray-100">目的地</a>
+                <a href="#planner" class="text-primary hover:text-secondary transition-colors duration-300 py-2 border-b border-gray-100">行程规划</a>
+                <a href="#inspiration" class="text-primary hover:text-secondary transition-colors duration-300 py-2">灵感生成器</a>
+                <button class="btn-secondary w-full">登录 / 注册</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 首屏 Hero 区域 -->
+    <section id="home" class="relative h-screen flex items-center justify-center overflow-hidden">
+        <!-- 背景视频/图片 -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/image/618bbdf5646291c37e13240535422972~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701216&x-signature=1aESQMHlglRwxlkqUvGTC%2FmOT5o%3D" 
+                 alt="海滩度假" 
+                 class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-b from-primary/70 to-primary/40"></div>
+        </div>
+        
+        <!-- 内容 -->
+        <div class="container mx-auto px-4 z-10 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 text-shadow-lg animate-fade-in">
+                探索<span class="text-secondary">世界</span>，<br>定制你的<span class="text-secondary">完美旅程</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-white mb-8 max-w-3xl mx-auto text-shadow">
+                告别千篇一律的旅游路线，我们根据你的喜好、预算和时间，为你打造独一无二的个性化旅行体验。
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#preferences" class="btn-secondary">
+                    <i class="fa fa-compass mr-2"></i>开始规划
+                </a>
+                <a href="#destinations" class="btn-outline bg-white bg-opacity-20 border-white text-white hover:bg-white hover:text-primary">
+                    <i class="fa fa-map-marker mr-2"></i>探索目的地
+                </a>
+            </div>
+        </div>
+        
+        <!-- 向下滚动指示 -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
+            <a href="#preferences" class="flex flex-col items-center">
+                <span class="mb-2">向下滚动</span>
+                <i class="fa fa-chevron-down"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- 用户偏好问卷 -->
+    <section id="preferences" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">告诉我们你的<span class="text-secondary">旅行偏好</span></h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                    完成这个简单的问卷，我们将为你推荐最适合的旅行目的地和体验。
+                </p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                <form id="preference-form" class="space-y-8">
+                    <!-- 旅行类型 -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">你喜欢哪种类型的旅行？</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <label class="flex flex-col items-center p-6 border border-gray-200 rounded-xl cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="travel-type" value="beach" class="hidden peer">
+                                <span class="text-3xl text-primary mb-2"><i class="fa fa-umbrella-beach"></i></span>
+                                <span>海滩度假</span>
+                                <span class="hidden peer-checked:block absolute w-4 h-4 bg-secondary rounded-full mt-[-2rem]"></span>
+                            </label>
+                            <label class="flex flex-col items-center p-6 border border-gray-200 rounded-xl cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="travel-type" value="adventure" class="hidden peer">
+                                <span class="text-3xl text-primary mb-2"><i class="fa fa-hiking"></i></span>
+                                <span>冒险探索</span>
+                            </label>
+                            <label class="flex flex-col items-center p-6 border border-gray-200 rounded-xl cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="travel-type" value="city" class="hidden peer">
+                                <span class="text-3xl text-primary mb-2"><i class="fa fa-building"></i></span>
+                                <span>城市观光</span>
+                            </label>
+                            <label class="flex flex-col items-center p-6 border border-gray-200 rounded-xl cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="travel-type" value="culture" class="hidden peer">
+                                <span class="text-3xl text-primary mb-2"><i class="fa fa-landmark"></i></span>
+                                <span>文化体验</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 旅行时长 -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">你的旅行时长是？</h3>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="duration" value="short" class="text-secondary focus:ring-secondary">
+                                <span>短途 (1-3天)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="duration" value="medium" class="text-secondary focus:ring-secondary">
+                                <span>中途 (4-7天)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="radio" name="duration" value="long" class="text-secondary focus:ring-secondary">
+                                <span>长途 (8天以上)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 预算范围 -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">你的预算范围是？</h3>
+                        <div class="px-2">
+                            <input type="range" id="budget" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-secondary">
+                            <div class="flex justify-between text-sm text-gray-500 mt-2">
+                                <span>经济型</span>
+                                <span>舒适型</span>
+                                <span>豪华型</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 兴趣爱好 -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">你对哪些活动感兴趣？（可多选）</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="food" class="text-secondary focus:ring-secondary">
+                                <span>美食探索</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="nature" class="text-secondary focus:ring-secondary">
+                                <span>自然风光</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="history" class="text-secondary focus:ring-secondary">
+                                <span>历史古迹</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="shopping" class="text-secondary focus:ring-secondary">
+                                <span>购物血拼</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="nightlife" class="text-secondary focus:ring-secondary">
+                                <span>夜生活</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <input type="checkbox" name="interests" value="sports" class="text-secondary focus:ring-secondary">
+                                <span>体育活动</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="text-center">
+                        <button type="submit" class="btn-secondary">
+                            <i class="fa fa-magic mr-2"></i>获取个性化推荐
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- 目的地推荐 -->
+    <section id="destinations" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">为你推荐的<span class="text-secondary">目的地</span></h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                    基于你的偏好，我们精选了以下目的地，每一个都能为你带来独特的旅行体验。
+                </p>
+            </div>
+            
+            <!-- 目的地筛选器 -->
+            <div class="flex flex-wrap justify-center gap-4 mb-12">
+                <button class="destination-filter px-6 py-2 rounded-full bg-primary text-white">全部</button>
+                <button class="destination-filter px-6 py-2 rounded-full bg-white hover:bg-primary hover:text-white transition-colors duration-300">海滩</button>
+                <button class="destination-filter px-6 py-2 rounded-full bg-white hover:bg-primary hover:text-white transition-colors duration-300">山脉</button>
+                <button class="destination-filter px-6 py-2 rounded-full bg-white hover:bg-primary hover:text-white transition-colors duration-300">城市</button>
+                <button class="destination-filter px-6 py-2 rounded-full bg-white hover:bg-primary hover:text-white transition-colors duration-300">文化</button>
+            </div>
+            
+            <!-- 目的地卡片网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 目的地卡片 1 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="beach">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/labis/image/618bbdf5646291c37e13240535422972~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701216&x-signature=1aESQMHlglRwxlkqUvGTC%2FmOT5o%3D" 
+                             alt="巴厘岛" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>4.9
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">巴厘岛，印度尼西亚</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>亚洲
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            探索巴厘岛的美丽海滩、神圣寺庙和茂密雨林，体验独特的印度尼西亚文化和热情好客。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">海滩</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">文化</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">美食</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥5,999起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目的地卡片 2 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="adventure">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/2218705535963627533~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701217&x-signature=23vFylrFPZEzLOjK6iUa4GxZezk%3D" 
+                             alt="瑞士阿尔卑斯山" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>4.8
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">瑞士阿尔卑斯山</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>欧洲
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            在壮观的阿尔卑斯山脉中徒步、滑雪或骑自行车，欣赏令人惊叹的山景和清澈的湖泊。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">冒险</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">自然风光</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">冬季运动</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥7,999起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目的地卡片 3 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="city">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/908895327060230259~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701217&x-signature=kdA6nWJ6UWMr4ga7bhjTUlDCCOc%3D" 
+                             alt="巴塞罗那" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>4.7
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">巴塞罗那，西班牙</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>欧洲
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            探索高迪的建筑奇迹、热闹的拉布拉斯大道、美丽的哥特区和地中海海滩。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">城市</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">艺术</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">美食</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥6,499起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目的地卡片 4 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="culture">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-tjoges91tu/58217e69ef0f92feb42d014897e6d7c2~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701217&x-signature=NsUnYIWVDsHWGgBxYdMDSzp0O6E%3D" 
+                             alt="京都" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>4.9
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">京都，日本</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>亚洲
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            沉浸在日本传统文化中，参观古老的寺庙、花园和传统町屋，体验茶道和和服。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">文化</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">历史</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">美食</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥6,999起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目的地卡片 5 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="beach">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p3-doubao-search-sign.byteimg.com/pgc-image/1531923711633be06bfa4d0~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701216&x-signature=ezaqHAM%2FppT2eIp9VS7wdFh1goM%3D" 
+                             alt="马尔代夫" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>5.0
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">马尔代夫</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>印度洋
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            在水上别墅中醒来，探索丰富的海洋生物，享受奢华的水疗护理和浪漫的晚餐。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">海滩</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">奢华</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">潜水</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥12,999起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目的地卡片 6 -->
+                <div class="destination-card bg-white rounded-xl overflow-hidden shadow-md card-hover" data-category="adventure">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1999175944893890571~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701217&x-signature=zjyv%2B8L3o5LTutLcZnvJQs%2FS%2BZo%3D" 
+                             alt="新西兰" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                        <div class="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-primary">
+                            <i class="fa fa-star text-yellow-400 mr-1"></i>4.8
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold">新西兰南岛</h3>
+                            <span class="text-sm text-gray-500">
+                                <i class="fa fa-map-marker mr-1"></i>大洋洲
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            体验惊险刺激的蹦极、跳伞和漂流，探索壮观的冰川、山脉和湖泊。
+                        </p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">冒险</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">自然风光</span>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">户外活动</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-primary">¥8,999起</span>
+                            <button class="btn-primary py-2 px-4 text-sm">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 加载更多按钮 -->
+            <div class="text-center mt-12">
+                <button id="load-more" class="btn-outline">
+                    <i class="fa fa-refresh mr-2"></i>加载更多目的地
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 行程规划器 -->
+    <section id="planner" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">创建你的<span class="text-secondary">完美行程</span></h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                    使用我们的行程规划工具，轻松安排你的每日活动、景点参观和餐饮选择。
+                </p>
+            </div>
+            
+            <div class="max-w-6xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <!-- 行程规划器头部 -->
+                    <div class="bg-primary text-white p-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-2xl font-bold">巴厘岛之旅</h3>
+                                <p class="text-white text-opacity-80">2025年2月15日 - 2025年2月22日（7天）</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-colors duration-300">
+                                    <i class="fa fa-share-alt mr-2"></i>分享
+                                </button>
+                                <button class="bg-secondary hover:bg-opacity-90 px-4 py-2 rounded-lg transition-colors duration-300">
+                                    <i class="fa fa-download mr-2"></i>导出
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 行程规划器内容 -->
+                    <div class="p-6">
+                        <!-- 日期选择器 -->
+                        <div class="flex overflow-x-auto scrollbar-hide gap-3 mb-8 pb-2">
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-primary text-white rounded-lg">
+                                第1天<br><span class="text-sm">2月15日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第2天<br><span class="text-sm">2月16日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第3天<br><span class="text-sm">2月17日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第4天<br><span class="text-sm">2月18日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第5天<br><span class="text-sm">2月19日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第6天<br><span class="text-sm">2月20日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第7天<br><span class="text-sm">2月21日</span>
+                            </button>
+                            <button class="date-tab flex-shrink-0 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-300">
+                                第8天<br><span class="text-sm">2月22日</span>
+                            </button>
+                        </div>
+                        
+                        <!-- 行程时间轴 -->
+                        <div class="relative">
+                            <!-- 时间轴线 -->
+                            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                            
+                            <!-- 行程项目 -->
+                            <div class="space-y-8">
+                                <!-- 行程项目 1 -->
+                                <div class="relative pl-12">
+                                    <div class="absolute left-0 top-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white">
+                                        <i class="fa fa-plane"></i>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-3">
+                                            <h4 class="text-lg font-semibold">抵达巴厘岛登巴萨国际机场</h4>
+                                            <span class="text-sm text-gray-500">09:00 - 11:00</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">
+                                            抵达登巴萨国际机场，办理入境手续后，专车接机前往酒店。
+                                        </p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">交通</span>
+                                            <button class="text-secondary text-sm hover:underline">
+                                                <i class="fa fa-pencil mr-1"></i>编辑
+                                            </button>
+                                            <button class="text-red-500 text-sm hover:underline">
+                                                <i class="fa fa-trash mr-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 行程项目 2 -->
+                                <div class="relative pl-12">
+                                    <div class="absolute left-0 top-1 w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-white">
+                                        <i class="fa fa-cutlery"></i>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-3">
+                                            <h4 class="text-lg font-semibold">午餐 - 巴厘岛特色餐厅</h4>
+                                            <span class="text-sm text-gray-500">12:00 - 13:30</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">
+                                            在乌布的一家特色餐厅享用正宗的巴厘岛美食，品尝当地特色菜肴。
+                                        </p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">餐饮</span>
+                                            <button class="text-secondary text-sm hover:underline">
+                                                <i class="fa fa-pencil mr-1"></i>编辑
+                                            </button>
+                                            <button class="text-red-500 text-sm hover:underline">
+                                                <i class="fa fa-trash mr-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 行程项目 3 -->
+                                <div class="relative pl-12">
+                                    <div class="absolute left-0 top-1 w-8 h-8 bg-accent rounded-full flex items-center justify-center text-white">
+                                        <i class="fa fa-tree"></i>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-3">
+                                            <h4 class="text-lg font-semibold">乌布猴林和皇宫参观</h4>
+                                            <span class="text-sm text-gray-500">14:30 - 17:00</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">
+                                            参观神圣的乌布猴林，与当地猴子互动，然后前往乌布皇宫，了解巴厘岛的历史文化。
+                                        </p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">景点</span>
+                                            <button class="text-secondary text-sm hover:underline">
+                                                <i class="fa fa-pencil mr-1"></i>编辑
+                                            </button>
+                                            <button class="text-red-500 text-sm hover:underline">
+                                                <i class="fa fa-trash mr-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 行程项目 4 -->
+                                <div class="relative pl-12">
+                                    <div class="absolute left-0 top-1 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                        <i class="fa fa-moon-o"></i>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-3">
+                                            <h4 class="text-lg font-semibold">传统巴厘舞表演晚餐</h4>
+                                            <span class="text-sm text-gray-500">19:00 - 21:00</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">
+                                            在一家传统餐厅享用晚餐，同时欣赏精彩的巴厘舞表演，体验当地文化。
+                                        </p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">文化</span>
+                                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">餐饮</span>
+                                            <button class="text-secondary text-sm hover:underline">
+                                                <i class="fa fa-pencil mr-1"></i>编辑
+                                            </button>
+                                            <button class="text-red-500 text-sm hover:underline">
+                                                <i class="fa fa-trash mr-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 添加行程按钮 -->
+                            <div class="mt-8 text-center">
+                                <button id="add-activity" class="btn-outline">
+                                    <i class="fa fa-plus mr-2"></i>添加活动
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI灵感生成器 -->
+    <section id="inspiration" class="py-20 bg-gradient-to-b from-primary to-primary/90 text-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">AI旅行<span class="text-secondary">灵感生成器</span></h2>
+                <p class="text-lg text-white text-opacity-80 max-w-3xl mx-auto">
+                    上传一张图片或描述你的梦想旅行，我们的AI将为你推荐匹配的目的地和体验。
+                </p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl shadow-xl p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- 左侧：输入区域 -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-6">分享你的旅行梦想</h3>
+                        
+                        <!-- 图片上传 -->
+                        <div class="mb-6">
+                            <label class="block text-white text-opacity-80 mb-2">上传一张图片（可选）</label>
+                            <div class="border-2 border-dashed border-white border-opacity-30 rounded-lg p-8 text-center cursor-pointer hover:border-secondary transition-colors duration-300">
+                                <i class="fa fa-cloud-upload text-4xl mb-3"></i>
+                                <p class="mb-2">点击或拖拽图片到此处</p>
+                                <p class="text-sm text-white text-opacity-60">支持 JPG, PNG 格式</p>
+                                <input type="file" class="hidden" accept="image/*">
+                            </div>
+                        </div>
+                        
+                        <!-- 文字描述 -->
+                        <div class="mb-6">
+                            <label class="block text-white text-opacity-80 mb-2">或者描述你的梦想旅行</label>
+                            <textarea class="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg p-4 text-white placeholder-white placeholder-opacity-60 focus:outline-none focus:ring-2 focus:ring-secondary" 
+                                      rows="5" 
+                                      placeholder="例如：我想要一个宁静的海滩度假，有清澈的海水和白色的沙滩，可以浮潜和放松..."></textarea>
+                        </div>
+                        
+                        <!-- 生成按钮 -->
+                        <button id="generate-inspiration" class="btn-secondary w-full">
+                            <i class="fa fa-magic mr-2"></i>生成旅行灵感
+                        </button>
+                    </div>
+                    
+                    <!-- 右侧：结果展示 -->
+                    <div class="bg-white bg-opacity-5 rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-4">为你推荐</h3>
+                        
+                        <!-- 加载状态 -->
+                        <div id="loading-state" class="hidden flex flex-col items-center justify-center py-12">
+                            <div class="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p>AI正在分析你的偏好...</p>
+                        </div>
+                        
+                        <!-- 结果内容 -->
+                        <div id="inspiration-results">
+                            <!-- 目的地匹配度 -->
+                            <div class="mb-6">
+                                <div class="flex justify-between mb-2">
+                                    <span>目的地匹配度</span>
+                                    <span>92%</span>
+                                </div>
+                                <div class="w-full bg-white bg-opacity-10 rounded-full h-2">
+                                    <div class="bg-secondary h-2 rounded-full" style="width: 92%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 推荐目的地 -->
+                            <div class="mb-6">
+                                <h4 class="font-medium mb-3">最佳匹配目的地</h4>
+                                <div class="bg-white bg-opacity-5 rounded-lg p-4 flex items-center gap-4">
+                                    <img src="https://p3-doubao-search-sign.byteimg.com/pgc-image/1531923711633be06bfa4d0~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701216&x-signature=ezaqHAM%2FppT2eIp9VS7wdFh1goM%3D" 
+                                         alt="塞舌尔" 
+                                         class="w-20 h-20 object-cover rounded-lg">
+                                    <div>
+                                        <h5 class="font-semibold">塞舌尔</h5>
+                                        <p class="text-sm text-white text-opacity-80">印度洋上的天堂群岛，拥有世界上最美丽的海滩</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 推荐体验 -->
+                            <div class="mb-6">
+                                <h4 class="font-medium mb-3">推荐体验</h4>
+                                <div class="space-y-3">
+                                    <div class="bg-white bg-opacity-5 rounded-lg p-3 flex items-center gap-3">
+                                        <i class="fa fa-sun-o text-secondary"></i>
+                                        <span>安塞拉齐奥海滩日光浴</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-5 rounded-lg p-3 flex items-center gap-3">
+                                        <i class="fa fa-tint text-secondary"></i>
+                                        <span>普拉兰岛浮潜和海洋生物探索</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-5 rounded-lg p-3 flex items-center gap-3">
+                                        <i class="fa fa-cutlery text-secondary"></i>
+                                        <span>海滩浪漫晚餐</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-5 rounded-lg p-3 flex items-center gap-3">
+                                        <i class="fa fa-leaf text-secondary"></i>
+                                        <span>瓦莱迪马埃自然保护区徒步</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 行动按钮 -->
+                            <div class="flex gap-3">
+                                <button class="btn-secondary flex-1">
+                                    <i class="fa fa-compass mr-2"></i>探索目的地
+                                </button>
+                                <button class="bg-white bg-opacity-10 hover:bg-opacity-20 px-4 py-3 rounded-lg transition-colors duration-300">
+                                    <i class="fa fa-heart-o"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 订阅区域 -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto bg-primary rounded-2xl shadow-xl overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2">
+                    <!-- 左侧：文字内容 -->
+                    <div class="p-8 md:p-12 flex flex-col justify-center">
+                        <h2 class="text-3xl font-bold text-white mb-4">获取最新的旅行灵感和优惠</h2>
+                        <p class="text-white text-opacity-80 mb-6">
+                            订阅我们的电子邮件，获取个性化的旅行推荐、季节性优惠和独家旅行攻略。
+                        </p>
+                        <form class="flex flex-col sm:flex-row gap-3">
+                            <input type="email" placeholder="输入你的邮箱地址" class="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                            <button type="submit" class="btn-secondary whitespace-nowrap">
+                                <i class="fa fa-paper-plane mr-2"></i>订阅
+                            </button>
+                        </form>
+                        <p class="text-white text-opacity-60 text-sm mt-4">
+                            我们尊重你的隐私，不会向第三方分享你的信息。
+                        </p>
+                    </div>
+                    
+                    <!-- 右侧：图片 -->
+                    <div class="hidden md:block relative h-full">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/labis/6f811831803b6375c3b4771d107e6660~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1779701216&x-signature=4AAMQRtcjkdDhHDsSxjirLjpbiY%3D" 
+                             alt="海滩度假" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-r from-primary to-transparent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white pt-16 pb-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                <!-- 公司信息 -->
+                <div>
+                    <div class="flex items-center space-x-2 mb-6">
+                        <span class="text-3xl text-secondary"><i class="fa fa-paper-plane-o"></i></span>
+                        <span class="text-2xl font-bold">Wanderlust</span>
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        我们致力于为你打造独一无二的个性化旅行体验，让每一次旅行都成为难忘的回忆。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">
+                            <i class="fa fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 快速链接 -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-6">快速链接</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-gray-400 hover:text-secondary transition-colors duration-300">首页</a></li>
+                        <li><a href="#preferences" class="text-gray-400 hover:text-secondary transition-colors duration-300">偏好设置</a></li>
+                        <li><a href="#destinations" class="text-gray-400 hover:text-secondary transition-colors duration-300">目的地</a></li>
+                        <li><a href="#planner" class="text-gray-400 hover:text-secondary transition-colors duration-300">行程规划</a></li>
+                        <li><a href="#inspiration" class="text-gray-400 hover:text-secondary transition-colors duration-300">灵感生成器</a></li>
+                    </ul>
+                </div>
+                
+                <!-- 热门目的地 -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-6">热门目的地</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">巴厘岛，印度尼西亚</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">京都，日本</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">巴塞罗那，西班牙</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">瑞士阿尔卑斯山</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-secondary transition-colors duration-300">马尔代夫</a></li>
+                    </ul>
+                </div>
+                
+                <!-- 联系我们 -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-6">联系我们</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start space-x-3">
+                            <i class="fa fa-map-marker text-secondary mt-1"></i>
+                            <span class="text-gray-400">北京市朝阳区建国路88号</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <i class="fa fa-phone text-secondary"></i>
+                            <span class="text-gray-400">+86 10 8888 8888</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <i class="fa fa-envelope text-secondary"></i>
+                            <span class="text-gray-400">info@wanderlust.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 版权信息 -->
+            <div class="border-t border-gray-800 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-500 text-sm mb-4 md:mb-0">
+                        &copy; 2025 Wanderlust. 保留所有权利。
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">隐私政策</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">服务条款</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-300 text-sm">Cookie政策</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 添加活动模态框 -->
+    <div id="activity-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full mx-4 z-10 transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">添加活动</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="activity-form" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 mb-2">活动名称</label>
+                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">日期</label>
+                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                            <option>第1天 (2月15日)</option>
+                            <option>第2天 (2月16日)</option>
+                            <option>第3天 (2月17日)</option>
+                            <option>第4天 (2月18日)</option>
+                            <option>第5天 (2月19日)</option>
+                            <option>第6天 (2月20日)</option>
+                            <option>第7天 (2月21日)</option>
+                            <option>第8天 (2月22日)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">活动类型</label>
+                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                            <option>景点参观</option>
+                            <option>餐饮</option>
+                            <option>交通</option>
+                            <option>文化体验</option>
+                            <option>购物</option>
+                            <option>其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">开始时间</label>
+                        <input type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">结束时间</label>
+                        <input type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">描述</label>
+                    <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary" rows="3"></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="cancel-activity" class="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-300">
+                        取消
+                    </button>
+                    <button type="submit" class="btn-secondary">
+                        添加活动
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 导航栏滚动效果
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-primary', 'shadow-md');
+                    navbar.classList.remove('bg-transparent');
+                } else {
+                    navbar.classList.remove('bg-primary', 'shadow-md');
+                    navbar.classList.add('bg-transparent');
+                }
+            });
+            
+            // 移动端菜单切换
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            menuToggle.addEventListener('click', function() {
+                if (mobileMenu.classList.contains('invisible')) {
+                    mobileMenu.classList.remove('invisible', '-translate-y-full', 'opacity-0');
+                    mobileMenu.classList.add('translate-y-0', 'opacity-100');
+                    menuToggle.innerHTML = '<i class="fa fa-times"></i>';
+                } else {
+                    mobileMenu.classList.add('invisible', '-translate-y-full', 'opacity-0');
+                    mobileMenu.classList.remove('translate-y-0', 'opacity-100');
+                    menuToggle.innerHTML = '<i class="fa fa-bars"></i>';
+                }
+            });
+            
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 关闭移动菜单（如果打开）
+                    if (!mobileMenu.classList.contains('invisible')) {
+                        mobileMenu.classList.add('invisible', '-translate-y-full', 'opacity-0');
+                        mobileMenu.classList.remove('translate-y-0', 'opacity-100');
+                        menuToggle.innerHTML = '<i class="fa fa-bars"></i>';
+                    }
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // 目的地筛选
+            const destinationFilters = document.querySelectorAll('.destination-filter');
+            const destinationCards = document.querySelectorAll('.destination-card');
+            
+            destinationFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    // 更新筛选按钮样式
+                    destinationFilters.forEach(btn => {
+                        btn.classList.remove('bg-primary', 'text-white');
+                        btn.classList.add('bg-white', 'hover:bg-primary', 'hover:text-white');
+                    });
+                    this.classList.remove('bg-white', 'hover:bg-primary', 'hover:text-white');
+                    this.classList.add('bg-primary', 'text-white');
+                    
+                    // 筛选目的地卡片
+                    const category = this.textContent.trim().toLowerCase();
+                    
+                    destinationCards.forEach(card => {
+                        if (category === '全部' || card.dataset.category === category) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // 日期标签切换
+            const dateTabs = document.querySelectorAll('.date-tab');
+            
+            dateTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    dateTabs.forEach(t => {
+                        t.classList.remove('bg-primary', 'text-white');
+                        t.classList.add('bg-gray-100', 'hover:bg-gray-200');
+                    });
+                    this.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+                    this.classList.add('bg-primary', 'text-white');
+                });
+            });
+            
+            // 添加活动模态框
+            const addActivityBtn = document.getElementById('add-activity');
+            const activityModal = document.getElementById('activity-modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalBtn = document.getElementById('close-modal');
+            const cancelActivityBtn = document.getElementById('cancel-activity');
+            const activityForm = document.getElementById('activity-form');
+            
+            function openModal() {
+                activityModal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+            
+            function closeModal() {
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    activityModal.classList.add('hidden');
+                }, 300);
+            }
+            
+            addActivityBtn.addEventListener('click', openModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelActivityBtn.addEventListener('click', closeModal);
+            
+            activityForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // 这里可以添加表单提交逻辑
+                closeModal();
+                
+                // 显示成功消息（示例）
+                alert('活动已成功添加到行程！');
+            });
+            
+            // 偏好表单提交
+            const preferenceForm = document.getElementById('preference-form');
+            
+            preferenceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // 这里可以添加表单提交逻辑
+                
+                // 显示成功消息（示例）
+                alert('偏好设置已保存！我们已为你更新了推荐目的地。');
+                
+                // 滚动到目的地部分
+                document.querySelector('#destinations').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+            
+            // AI灵感生成器
+            const generateInspirationBtn = document.getElementById('generate-inspiration');
+            const loadingState = document.getElementById('loading-state');
+            const inspirationResults = document.getElementById('inspiration-results');
+            
+            generateInspirationBtn.addEventListener('click', function() {
+                // 显示加载状态
+                inspirationResults.style.display = 'none';
+                loadingState.classList.remove('hidden');
+                
+                // 模拟AI处理时间
+                setTimeout(() => {
+                    // 隐藏加载状态，显示结果
+                    loadingState.classList.add('hidden');
+                    inspirationResults.style.display = 'block';
+                }, 2000);
+            });
+            
+            // 加载更多目的地
+            const loadMoreBtn = document.getElementById('load-more');
+            
+            loadMoreBtn.addEventListener('click', function() {
+                // 显示加载状态
+                this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>加载中...';
+                this.disabled = true;
+                
+                // 模拟加载更多目的地
+                setTimeout(() => {
+                    // 恢复按钮状态
+                    this.innerHTML = '<i class="fa fa-refresh mr-2"></i>加载更多目的地';
+                    this.disabled = false;
+                    
+                    // 显示提示消息
+                    alert('已加载全部目的地！');
+                }, 1500);
+            });
+            
+            // 初始化GSAP动画
+            initAnimations();
+        });
+        
+        // GSAP动画初始化
+        function initAnimations() {
+            // 首屏元素动画
+            gsap.from('#home h1', {
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                delay: 0.2
+            });
+            
+            gsap.from('#home p', {
+                opacity: 0,
+                y: 30,
+                duration: 1,
+                delay: 0.5
+            });
+            
+            gsap.from('#home .flex', {
+                opacity: 0,
+                y: 30,
+                duration: 1,
+                delay: 0.8
+            });
+            
+            // 滚动触发动画
+            const sections = document.querySelectorAll('section:not(#home)');
+            
+            sections.forEach(section => {
+                const heading = section.querySelector('h2');
+                const content = section.querySelector('.container > div:not(.text-center)');
+                
+                if (heading && content) {
+                    gsap.from(heading, {
+                        scrollTrigger: {
+                            trigger: section,
+                            start: 'top 80%'
+                        },
+                        opacity: 0,
+                        y: 50,
+                        duration: 0.8
+                    });
+                    
+                    gsap.from(content, {
+                        scrollTrigger: {
+                            trigger: section,
+                            start: 'top 70%'
+                        },
+                        opacity: 0,
+                        y: 30,
+                        duration: 0.8,
+                        delay: 0.3
+                    });
+                }
+            });
+            
+            // 目的地卡片动画
+            gsap.from('.destination-card', {
+                scrollTrigger: {
+                    trigger: '#destinations',
+                    start: 'top 60%'
+                },
+                opacity: 0,
+                y: 50,
+                stagger: 0.2,
+                duration: 0.8
+            });
+            
+            // 行程规划器动画
+            gsap.from('#planner .bg-white', {
+                scrollTrigger: {
+                    trigger: '#planner',
+                    start: 'top 60%'
+                },
+                opacity: 0,
+                y: 50,
+                duration: 0.8
+            });
+            
+            // AI灵感生成器动画
+            gsap.from('#inspiration .grid > div', {
+                scrollTrigger: {
+                    trigger: '#inspiration',
+                    start: 'top 60%'
+                },
+                opacity: 0,
+                y: 50,
+                stagger: 0.3,
+                duration: 0.8
+            });
+        }
+    </script>
+</body>
+</html>
